@@ -7,7 +7,7 @@
   // Eden API fixed settings
   const provider    = "google";
   const model       = "gemini-1.5-flash-8b";
-  const max_tokens  = 100;
+  const max_tokens  = 300;
   const temperature = 0.7;
   const k           = 1;
   let historyChat   = [];
