@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatbot</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Marked.js CDN for Markdown formatting -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    /* Optional: Custom spinner animation style */
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-left-color: currentColor;
+      border-radius: 50%;
+      width: 1.5rem;
+      height: 1.5rem;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Chatbot Icon (initially visible) -->
+  <div id="chatbot-icon" class="fixed bottom-5 right-5 z-50">
+    <button id="open-chat" class="w-16 h-16 rounded-full shadow-xl text-white flex items-center justify-center"
+      style="background-color: #4CAF50;">
+      <!-- Default SVG icon -->
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.77 9.77 0 01-4.255-.949L3 20l1.243-3.757C3.043 15.385 3 14.698 3 14c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Chat Widget (initially hidden) -->
+  <!-- Responsive: scales down on smaller screens -->
+  <div id="chat-container" class="fixed bottom-5 right-5 w-11/12 max-w-xl md:w-[30rem] h-[80vh] max-h-[36rem] bg-white shadow-xl rounded-lg flex flex-col overflow-hidden hidden z-50">
+    <!-- Chat Header -->
+    <div id="chat-header" class="flex items-center justify-between p-3 text-white font-semibold"
+      style="background-color: #4CAF50;">
+      <span id="chat-title">Chatbot</span>
+      <button id="close-chat" class="text-2xl leading-none">&times;</button>
+    </div>
+    <!-- Chat Box -->
+    <div id="chat-box" class="flex-grow p-4 overflow-y-auto bg-gray-100 space-y-2">
+      <!-- Chat messages will appear here -->
+    </div>
+    <!-- User Input -->
+    <div class="p-2 border-t border-gray-300">
+      <input
+        type="text"
+        id="user-input"
+        placeholder="Enter your message"
+        class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+      />
+      <button
+        id="send-btn"
+        class="mt-2 w-full p-2 text-white rounded hover:opacity-90"
+        style="background-color: #4CAF50;"
+      >
+        Send
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Default configuration values
+    let project_uuid = "";
+    let provider = "google";
+    let model = "gemini-1.5-flash-8b";
+    let max_tokens = 100;
+    let temperature = 0.7;
+    let k = 1;
+    let historyChat = [];
+    let primaryColor = "#60A5FA"; // default color
+    let chatTitle = "Chatbot";
+
+    // Retrieve URL parameters and override defaults if provided
+    function getURLParams() {
+      const params = new URLSearchParams(window.location.search);
+      project_uuid = params.get("project") || project_uuid;
+      primaryColor = params.get("primaryColor") || primaryColor;
+      chatTitle = params.get("chatTitle") || chatTitle;
+    }
+
+    // Update UI with the customizable values
+    function updateUI() {
+      // Update header background and title
+      document.getElementById("chat-header").style.backgroundColor = primaryColor;
+      document.getElementById("chat-title").textContent = chatTitle;
+      // Update send button and icon background colors
+      document.getElementById("send-btn").style.backgroundColor = primaryColor;
+      document.getElementById("open-chat").style.backgroundColor = primaryColor;
+      // Update focus ring on input field
+      const userInput = document.getElementById("user-input");
+      userInput.classList.remove("focus:ring-green-500");
+      userInput.classList.add(`focus:ring-[${primaryColor}]`);
+    }
+
+    // Function to display messages in the chat box.
+    // For bot messages, markdown is parsed into HTML.
+    function displayMessage(message, sender) {
+      const messageDiv = document.createElement("div");
+      if (sender === "user") {
+        messageDiv.className = "bg-green-100 text-green-800 p-2 rounded self-end max-w-xs";
+        messageDiv.textContent = message;
+      } else if (sender === "bot") {
+        messageDiv.className = "bg-gray-200 text-gray-800 p-2 rounded self-start max-w-xs";
+        // Use Marked.js to convert markdown to HTML
+        messageDiv.innerHTML = marked.parse(message);
+      } else if (sender === "loading") {
+        messageDiv.className = "flex items-center space-x-2 self-start max-w-xs";
+        messageDiv.id = "loading-message";
+        const spinner = document.createElement("div");
+        spinner.className = "spinner text-gray-600";
+        const loadingText = document.createElement("span");
+        loadingText.textContent = "Thinking...";
+        messageDiv.appendChild(spinner);
+        messageDiv.appendChild(loadingText);
+      }
+      document.getElementById("chat-box").appendChild(messageDiv);
+      messageDiv.scrollIntoView({ behavior: "smooth" });
+    }
+
+    // Remove the loading spinner message if it exists
+    function removeLoadingMessage() {
+      const loadingElem = document.getElementById("loading-message");
+      if (loadingElem) {
+        loadingElem.remove();
+      }
+    }
+
+    // Function to send a message
+    async function sendMessage() {
+      const userInputEl = document.getElementById("user-input");
+      const userInput = userInputEl.value;
+      if (userInput && project_uuid) {
+        displayMessage(userInput, "user");
+        userInputEl.value = "";
+        // Display loading spinner
+        displayMessage("", "loading");
+        const response = await getYodaResponse(userInput);
+        removeLoadingMessage();
+        displayMessage(response, "bot");
+      }
+    }
+
+    // Function to fetch a response from the Eden AI API
+    async function getYodaResponse(text) {
+      const url = `https://api.edenai.run/v2/aiproducts/askyoda/v2/${project_uuid}/ask_llm_project`;
+      const payload = {
+        query: text,
+        llm_provider: provider,
+        llm_model: model,
+        history: historyChat,
+        k: k,
+        max_tokens: max_tokens,
+        temperature: temperature
+      };
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const result = data.result || "No response from AI.";
+          historyChat.push({ user: text, assistant: result });
+          return result;
+        } else {
+          return "Error: Unable to fetch response.";
+        }
+      } catch (error) {
+        console.error("Error fetching response:", error);
+        return "Error: An unexpected error occurred.";
+      }
+    }
+
+    // Show chat widget and hide the icon
+    function openChat() {
+      document.getElementById("chatbot-icon").classList.add("hidden");
+      document.getElementById("chat-container").classList.remove("hidden");
+    }
+
+    // Hide chat widget and show the icon
+    function closeChat() {
+      document.getElementById("chat-container").classList.add("hidden");
+      document.getElementById("chatbot-icon").classList.remove("hidden");
+    }
+
+    // Event listeners for open/close actions and sending messages
+    document.getElementById("open-chat").addEventListener("click", openChat);
+    document.getElementById("close-chat").addEventListener("click", closeChat);
+    document.getElementById("send-btn").addEventListener("click", sendMessage);
+    document.getElementById("user-input").addEventListener("keypress", function(e) {
+      if (e.key === "Enter") {
+        sendMessage();
+      }
+    });
+
+    // On load, retrieve parameters and update the UI
+    window.addEventListener("load", () => {
+      getURLParams();
+      updateUI();
+    });
+  </script>
+</body>
+</html>
