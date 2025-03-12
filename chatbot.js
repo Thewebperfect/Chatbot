@@ -52,12 +52,11 @@
     background: "#fff",
     boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
     borderRadius: "12px",
-    display: "none",
+    display: "none", // Closed by default
     zIndex: "1000",
     fontFamily: "sans-serif",
-    // FLEX layout:
-    display: "flex",
-    flexDirection: "column"
+    flexDirection: "column",
+    display: "flex"
   });
 
   // Chat container inner HTML
@@ -134,13 +133,13 @@
 
   // ======= Toggle chatbot =======
   chatButton.addEventListener("click", () => {
-    chatContainer.style.display = "block";
-    chatButton.style.display = "none";
+    chatContainer.style.display = "flex";
+    chatButton.style.display = "none"; // Hide icon when chat is open
   });
 
   document.getElementById("close-chat").addEventListener("click", () => {
     chatContainer.style.display = "none";
-    chatButton.style.display = "flex";
+    chatButton.style.display = "flex"; // Show icon when chat is closed
   });
 
   // ======= Sending a Message =======
@@ -251,7 +250,6 @@
     }
 
     const chatBox = document.getElementById("chat-box");
-    // Ensure the chat box is using flex or block layout:
     chatBox.style.display = "flex";
     chatBox.style.flexDirection = "column";
     chatBox.appendChild(messageDiv);
