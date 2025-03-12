@@ -1,15 +1,16 @@
 (function() {
-  // ======= Configuration =======
-  const primaryColor   = "#60A5FA";
-  const chatTitle      = "My Chatbot";
-  const projectUUID    = "";
+  // ======= Configuration (overridden by global variables) =======
+  const primaryColor = window.chatbotColor || "#60A5FA";
+  const chatTitle    = window.chatbotTitle || "My Chatbot";
+  const projectUUID  = window.chatbotProject || "";
 
-  const provider       = "google";
-  const model          = "gemini-1.5-flash-8b";
-  const max_tokens     = 100;
-  const temperature    = 0.7;
-  const k              = 1;
-  let historyChat      = [];
+  // Eden API fixed settings
+  const provider    = "google";
+  const model       = "gemini-1.5-flash-8b";
+  const max_tokens  = 100;
+  const temperature = 0.7;
+  const k           = 1;
+  let historyChat   = [];
 
   // ======= Load Marked.js if not already loaded =======
   if (typeof marked === "undefined") {
