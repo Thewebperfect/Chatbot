@@ -130,15 +130,18 @@
   `;
   document.head.appendChild(styleElem);
 
-  // ======= Toggle chatbot =======
+  // ======= Toggle chatbot: Clicking the icon toggles the chat container =======
   chatButton.addEventListener("click", () => {
-    chatContainer.style.display = "flex";
-    chatButton.style.display = "none"; // Hide icon when chat is open
+    if (chatContainer.style.display === "none" || chatContainer.style.display === "") {
+      chatContainer.style.display = "flex";
+    } else {
+      chatContainer.style.display = "none";
+    }
   });
 
+  // Close button inside the chat container also toggles it off
   document.getElementById("close-chat").addEventListener("click", () => {
     chatContainer.style.display = "none";
-    chatButton.style.display = "flex"; // Show icon when chat is closed
   });
 
   // ======= Sending a Message =======
