@@ -55,8 +55,8 @@
     display: "none", // Closed by default
     zIndex: "1000",
     fontFamily: "sans-serif",
-    flexDirection: "column",
-    display: "flex"
+    display: "flex",
+    flexDirection: "column"
   });
 
   // Chat container inner HTML
@@ -134,12 +134,12 @@
   // ======= Toggle chatbot =======
   chatButton.addEventListener("click", () => {
     chatContainer.style.display = "flex";
-    chatButton.style.display = "none"; // Hide icon when chat is open
+    chatButton.style.display = "none";
   });
 
   document.getElementById("close-chat").addEventListener("click", () => {
     chatContainer.style.display = "none";
-    chatButton.style.display = "flex"; // Show icon when chat is closed
+    chatButton.style.display = "flex";
   });
 
   // ======= Sending a Message =======
