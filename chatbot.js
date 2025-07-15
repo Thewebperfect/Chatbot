@@ -11,8 +11,8 @@
   const temperature = 0.7;
   const k = 1;
 
-  // Local state for conversation history
-  const STORAGE_KEY = 'edenai_chatbot_conversations_v4_final';
+  // Local state - New key to prevent loading old, broken data structures
+  const STORAGE_KEY = 'edenai_chatbot_conversations_v5_stable';
   let conversations = {};
   let activeConversationId = null;
 
@@ -31,18 +31,16 @@
   const chatIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px;"><path fill-rule="evenodd" d="M4.848 2.771A49.144 49.144 0 0112 2.25c2.43 0 4.817.178 7.152.52 1.978.292 3.348 2.024 3.348 3.97v6.02c0 1.946-1.37 3.678-3.348 3.97a48.901 48.901 0 01-3.476.383.39.39 0 00-.297.15l-2.755 4.133a.75.75 0 01-1.248 0l-2.755-4.133a.39.39 0 00-.297-.15 48.9 48.9 0 01-3.476-.384c-1.978-.29-3.348-2.024-3.348-3.97V6.741c0-1.946 1.37-3.68 3.348-3.97zM6.75 8.25a.75.75 0 01.75-.75h9a.75.75 0 010 1.5h-9a.75.75 0 01-.75-.75zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H7.5z" clip-rule="evenodd" /></svg>`;
   const trashIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px;"><path fill-rule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 013.878.512.75.75 0 11-.256 1.478l-.209-.035-1.005 13.006a.75.75 0 01-.749.654H5.89a.75.75 0 01-.749-.654L4.135 6.68l-.209.035a.75.75 0 01-.256-1.478A48.567 48.567 0 017.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 013.369 0c1.603.051 2.815 1.387 2.815 2.951zm-6.136-1.452a51.196 51.196 0 013.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 00-6 0v-.113c0-.794.609-1.428 1.364-1.452z" clip-rule="evenodd" /></svg>`;
 
-  // ======= CSS Styles =======
+  // ======= CSS Styles (WITH LAYOUT FIXES) =======
   const chatbotStyles = `
     :root {
       --chatbot-primary-color: ${primaryColor};
       --chatbot-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
     }
     #chatbot-toggle-button {
-      position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px;
-      background-color: var(--chatbot-primary-color); color: white;
-      display: flex; justify-content: center; align-items: center; border-radius: 50%;
-      cursor: pointer; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); z-index: 1000;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background-color: var(--chatbot-primary-color); color: white;
+      display: flex; justify-content: center; align-items: center; border-radius: 50%; cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); z-index: 1000; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     #chatbot-toggle-button:hover { transform: scale(1.1); }
     #chatbot-toggle-button .icon { transition: transform 0.3s ease, opacity 0.2s ease; position: absolute; }
@@ -60,20 +58,20 @@
     #chatbot-container.chatbot-open + #chatbot-toggle-button .icon.close { transform: rotate(0deg) scale(1); opacity: 1; }
     
     #chatbot-main { display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; }
-    #chatbot-views { display: flex; flex-grow: 1; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; }
+    #chatbot-views { display: flex; flex-grow: 1; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
     #chatbot-views.show-chat { transform: translateX(-100%); }
-    .chatbot-view { width: 100%; flex-shrink: 0; display: flex; flex-direction: column; height: 100%; }
+    .chatbot-view { width: 100%; flex-shrink: 0; display: flex; flex-direction: column; }
 
-    /* Home View - CORRECTED LAYOUT */
+    /* Home View - ROBUST SCROLLING LAYOUT */
     #view-home { background-color: #ffffff; }
     .home-header { padding: 32px 24px 24px; text-align: center; color: white; flex-shrink: 0; background: var(--chatbot-primary-color); }
     .home-header h1 { font-size: 1.75rem; font-weight: 700; margin: 0 0 4px; }
     .home-header p { font-size: 0.95rem; opacity: 0.9; margin: 0; }
-    .conversation-list { flex-grow: 1; overflow-y: auto; } /* CRITICAL: This makes the list scrollable */
+    .conversation-list { flex: 1; overflow-y: auto; } /* CRITICAL: This makes the list scrollable and fill available space */
     .no-conversations { text-align: center; padding: 40px 24px; color: #6b7280; }
     .conversation-item { display: flex; align-items: center; padding: 14px 24px; cursor: pointer; transition: background-color 0.2s; border-bottom: 1px solid #e5e7eb; }
     .conversation-item:hover { background-color: #f9fafb; }
-    .conversation-item-details { flex-grow: 1; }
+    .conversation-item-details { flex-grow: 1; min-width: 0; }
     .conversation-item strong { font-size: 1rem; color: #1f2937; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .conversation-item .timestamp { font-size: 0.8rem; color: #9ca3af; margin-top: 4px; }
     .delete-convo-btn { flex-shrink: 0; padding: 8px; margin-left: 12px; border-radius: 50%; border: none; background: none; color: #9ca3af; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
@@ -81,13 +79,14 @@
     .home-footer { padding: 16px; flex-shrink: 0; background-color: #ffffff; border-top: 1px solid #e5e7eb; }
     .start-new-chat-btn { display: block; width: 100%; padding: 14px; text-align: center; font-weight: 600; background: var(--chatbot-primary-color); color: white; border: none; border-radius: 12px; cursor: pointer; transition: background-color 0.2s; }
 
-    /* Chat View - CORRECTED LAYOUT */
-    #view-chat { display: flex; flex-direction: column; background-color: #ffffff; }
+    /* Chat View - ROBUST SCROLLING LAYOUT */
+    #view-chat { background-color: #ffffff; }
     #chat-header { padding: 16px 20px; color: #1f2937; flex-shrink: 0; text-align: center; font-weight: 600; font-size: 1rem; border-bottom: 1px solid #e5e7eb; }
-    #chat-box { flex-grow: 1; overflow-y: auto; padding: 16px; background: #f9fafb; display: flex; flex-direction: column; gap: 12px; } /* CRITICAL: This makes the chat scrollable */
+    #chat-box { flex: 1; overflow-y: auto; padding: 16px; background: #f9fafb; display: flex; flex-direction: column; gap: 12px; } /* CRITICAL: This makes the chat scrollable */
     .chatbot-message { padding: 10px 14px; border-radius: 18px; max-width: 85%; word-wrap: break-word; animation: message-in 0.3s ease-out; line-height: 1.5; }
     .chatbot-message.user { background: #e5e7eb; color: #1f2937; align-self: flex-end; border-bottom-right-radius: 4px; }
     .chatbot-message.bot { background: var(--chatbot-primary-color); color: white; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .chatbot-message.bot p { margin: 0.5em 0; }
     
     #chat-input-area { padding: 12px; border-top: 1px solid #e5e7eb; flex-shrink: 0; background: #fff; }
     #chat-input-container { position: relative; display: flex; align-items: center; }
@@ -102,8 +101,8 @@
     .footer-btn.active { color: var(--chatbot-primary-color); }
 
     @keyframes message-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    #loading-message { display: flex; align-items: center; gap: 8px; color: #6b7280; align-self: flex-start; animation: message-in 0.3s ease-out; }
-    .spinner { border: 3px solid rgba(0,0,0,0.1); border-left-color: var(--chatbot-primary-color); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+    #loading-message { display: flex; align-items: center; gap: 8px; color: #6b7280; align-self: flex-start; animation: message-in 0.3s ease-out; padding: 10px 14px; }
+    .spinner { border: 3px solid rgba(0,0,0,0.1); border-left-color: #6b7280; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     @media (max-width: 480px) {
@@ -117,7 +116,6 @@
     <div id="chatbot-container">
       <div id="chatbot-main">
         <div id="chatbot-views">
-          <!-- Home View -->
           <div id="view-home" class="chatbot-view">
             <div class="home-header">
               <h1>Hi there 👋</h1>
@@ -128,7 +126,6 @@
               <button class="start-new-chat-btn">Start a New Conversation</button>
             </div>
           </div>
-          <!-- Chat View -->
           <div id="view-chat" class="chatbot-view">
             <div id="chat-header">${chatTitle}</div>
             <div id="chat-box"></div>
@@ -161,47 +158,47 @@
   document.body.insertAdjacentHTML('beforeend', chatbotHTML);
   
   // ======= DOM Element References =======
-  const chatbotContainer = document.getElementById("chatbot-container");
-  const toggleButton = document.getElementById("chatbot-toggle-button");
-  const chatBox = document.getElementById("chat-box");
-  const userInput = document.getElementById("user-input");
-  const sendButton = document.getElementById("send-btn");
-  const viewsContainer = document.getElementById("chatbot-views");
-  const navHome = document.getElementById("nav-home");
-  const navChat = document.getElementById("nav-chat");
+  const get = (id) => document.getElementById(id);
+  const chatbotContainer = get("chatbot-container");
+  const toggleButton = get("chatbot-toggle-button");
+  const chatBox = get("chat-box");
+  const userInput = get("user-input");
+  const sendButton = get("send-btn");
+  const viewsContainer = get("chatbot-views");
+  const navHome = get("nav-home");
+  const navChat = get("nav-chat");
   const conversationList = document.querySelector("#view-home .conversation-list");
   const startNewChatBtn = document.querySelector(".start-new-chat-btn");
 
-  // ======= Core Functions (JS logic remains the same, only CSS/HTML structure changed) =======
+  // ======= Core Functions =======
 
   const saveConversations = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
   
   const loadConversations = () => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    conversations = stored ? JSON.parse(stored) : {};
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      conversations = stored ? JSON.parse(stored) : {};
+    } catch (e) {
+      console.error("Could not parse conversations from localStorage", e);
+      conversations = {};
+    }
     renderHomeScreen();
   };
 
-  const toggleChatbot = (forceClose = false) => {
-    if (forceClose) {
-      chatbotContainer.classList.remove('chatbot-open');
-    } else {
-      chatbotContainer.classList.toggle('chatbot-open');
-    }
-  };
+  const toggleChatbot = (forceClose = false) => chatbotContainer.classList.toggle('chatbot-open', !forceClose && !chatbotContainer.classList.contains('chatbot-open'));
 
   const navigateTo = (view) => {
     if (view === 'chat') {
       if (!activeConversationId) {
         const sortedConvos = Object.values(conversations).sort((a,b) => b.createdAt - a.createdAt);
-        if (sortedConvos.length > 0) openConversation(sortedConvos[0].id);
+        if (sortedConvos.length > 0) openConversation(sortedConvos[0].id, false);
         else return;
       }
       viewsContainer.classList.add('show-chat');
       navChat.classList.add('active');
       navHome.classList.remove('active');
       userInput.focus();
-    } else { // 'home'
+    } else {
       viewsContainer.classList.remove('show-chat');
       navHome.classList.add('active');
       navChat.classList.remove('active');
@@ -212,7 +209,6 @@
   const renderHomeScreen = () => {
     conversationList.innerHTML = '';
     const sortedConvos = Object.values(conversations).sort((a,b) => b.createdAt - a.createdAt);
-
     if (sortedConvos.length === 0) {
       conversationList.innerHTML = `<div class="no-conversations"><p>Your previous chats will appear here.</p></div>`;
     } else {
@@ -220,19 +216,20 @@
         const firstUserMessage = convo.messages.find(m => m.sender === 'user')?.text || 'New Conversation';
         const item = document.createElement('div');
         item.className = 'conversation-item';
+        item.dataset.id = convo.id;
         item.innerHTML = `
             <div class="conversation-item-details">
                 <strong>${firstUserMessage.replace(/</g, "<")}</strong>
                 <div class="timestamp">${new Date(convo.createdAt).toLocaleString()}</div>
             </div>
-            <button class="delete-convo-btn" data-id="${convo.id}" aria-label="Delete conversation">${trashIcon}</button>`;
+            <button class="delete-convo-btn" aria-label="Delete conversation">${trashIcon}</button>`;
         conversationList.appendChild(item);
       });
     }
   };
   
   const deleteConversation = (id) => {
-    if (confirm("Are you sure you want to delete this conversation? This cannot be undone.")) {
+    if (confirm("Are you sure you want to delete this conversation?")) {
       delete conversations[id];
       if (activeConversationId === id) activeConversationId = null;
       saveConversations();
@@ -240,16 +237,17 @@
     }
   };
 
-  const openConversation = (id) => {
+  const openConversation = (id, shouldNavigate = true) => {
     activeConversationId = id;
     const conversation = conversations[id];
+    if (!conversation) return;
     chatBox.innerHTML = '';
     conversation.messages.forEach(msg => displayMessage(msg.text, msg.sender, false));
-    navigateTo('chat');
+    if (shouldNavigate) navigateTo('chat');
   };
 
   const startNewConversation = () => {
-    const newId = new Date().getTime();
+    const newId = Date.now();
     activeConversationId = newId;
     conversations[newId] = { id: newId, messages: [], createdAt: newId };
     saveConversations();
@@ -259,10 +257,13 @@
   const displayMessage = (text, sender, isNew = true) => {
     const messageDiv = document.createElement("div");
     messageDiv.classList.add("chatbot-message", sender);
-    const sanitizedText = text.replace(/</g, "<").replace(/>/g, ">");
-    messageDiv.innerHTML = (sender === 'bot' && typeof marked !== "undefined") ? marked.parse(text) : sanitizedText;
+    if (sender === 'bot') {
+      messageDiv.innerHTML = typeof marked !== "undefined" ? marked.parse(text) : text.replace(/</g, "<");
+    } else {
+      messageDiv.textContent = text;
+    }
     chatBox.appendChild(messageDiv);
-    if(isNew) chatBox.scrollTop = chatBox.scrollHeight;
+    if (isNew) chatBox.scrollTop = chatBox.scrollHeight;
   };
 
   const displayLoading = () => {
@@ -278,42 +279,50 @@
   const sendMessage = async () => {
     const text = userInput.value.trim();
     if (!text || !activeConversationId) return;
-    const userMessage = { sender: 'user', text: text };
+    const userMessage = { sender: 'user', text };
     conversations[activeConversationId].messages.push(userMessage);
     displayMessage(text, 'user');
-    saveConversations();
     userInput.value = "";
     userInput.focus();
     displayLoading();
+    saveConversations();
     try {
       const responseText = await getEdenResponse(text);
-      const botMessage = { sender: 'bot', text: responseText };
-      conversations[activeConversationId].messages.push(botMessage);
+      conversations[activeConversationId].messages.push({ sender: 'bot', text: responseText });
       removeLoading();
       displayMessage(responseText, 'bot');
-      saveConversations();
     } catch (error) {
+      console.error(error);
+      const errorMessage = error.message || "Could not connect to the AI service.";
+      conversations[activeConversationId].messages.push({ sender: 'bot', text: `Error: ${errorMessage}` });
       removeLoading();
-      displayMessage("Sorry, I encountered an error. Please try again.", "bot");
+      displayMessage(`Error: ${errorMessage}`, 'bot');
+    } finally {
+        saveConversations();
     }
   };
 
+  // CRITICAL API HISTORY FIX
   const getEdenResponse = async (text) => {
     if (!projectUUID) {
-      return new Promise(resolve => setTimeout(() => resolve("This is a test response from the AI. Configure your `projectUUID` to get real answers."), 1000));
+      return new Promise(resolve => setTimeout(() => resolve("This is a test response. Set `window.chatbotProject` to connect to Eden AI."), 1000));
     }
-    const historyForAPI = conversations[activeConversationId].messages.slice(0, -1).map(m => ({ user: m.sender === 'user' ? m.text : undefined, assistant: m.sender === 'bot' ? m.text : undefined })).filter(m => m.user || m.assistant);
-    const url = `https://api.edenai.run/v2/aiproducts/askyoda/v2/${projectUUID}/ask_llm_project`;
+    const historyForAPI = [];
+    const messages = conversations[activeConversationId].messages.slice(0, -1);
+    for (let i = 0; i < messages.length; i += 2) {
+      if (messages[i]?.sender === 'user' && messages[i+1]?.sender === 'bot') {
+        historyForAPI.push({ user: messages[i].text, assistant: messages[i+1].text });
+      }
+    }
     const payload = { query: text, llm_provider: provider, llm_model: model, history: historyForAPI, k, max_tokens, temperature };
-    try {
-      const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
-      const data = await response.json();
-      return data.result || "I'm sorry, I couldn't find an answer.";
-    } catch (error) {
-      console.error("Error fetching from Eden AI:", error);
-      return "Error: Could not connect to the AI service.";
+    const response = await fetch(`https://api.edenai.run/v2/aiproducts/askyoda/v2/${projectUUID}/ask_llm_project`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    if (!response.ok) {
+        const errData = await response.json();
+        const errMsg = errData.error?.message?.history?.[0] || errData.error?.message || response.statusText;
+        throw new Error(errMsg);
     }
+    const data = await response.json();
+    return data.result || "I'm sorry, I couldn't find an answer.";
   };
 
   // ======= Event Listeners =======
@@ -324,23 +333,15 @@
   navChat.addEventListener('click', () => navigateTo('chat'));
   startNewChatBtn.addEventListener('click', startNewConversation);
   
-  // Event delegation for dynamically created elements
   conversationList.addEventListener('click', (e) => {
-    const deleteButton = e.target.closest('.delete-convo-btn');
-    if (deleteButton) {
-        const convoId = parseInt(deleteButton.dataset.id, 10);
-        deleteConversation(convoId);
-        return;
-    }
-    const convoItem = e.target.closest('.conversation-item');
-    if (convoItem) {
-        // Since we can't easily get the ID from the element anymore, we'll find it by index
-        const allItems = Array.from(conversationList.children);
-        const index = allItems.indexOf(convoItem);
-        const sortedConvos = Object.values(conversations).sort((a,b) => b.createdAt - a.createdAt);
-        if(sortedConvos[index]) {
-            openConversation(sortedConvos[index].id);
-        }
+    const target = e.target;
+    const convoItem = target.closest('.conversation-item');
+    if (!convoItem) return;
+    const id = parseInt(convoItem.dataset.id, 10);
+    if (target.closest('.delete-convo-btn')) {
+      deleteConversation(id);
+    } else {
+      openConversation(id);
     }
   });
 
