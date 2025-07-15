@@ -12,7 +12,7 @@
   const k = 1;
 
   // Local state for conversation history
-  const STORAGE_KEY = 'edenai_chatbot_conversations_v3';
+  const STORAGE_KEY = 'edenai_chatbot_conversations_v4_final';
   let conversations = {};
   let activeConversationId = null;
 
@@ -60,57 +60,38 @@
     #chatbot-container.chatbot-open + #chatbot-toggle-button .icon.close { transform: rotate(0deg) scale(1); opacity: 1; }
     
     #chatbot-main { display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; }
-    #chatbot-views { display: flex; flex-grow: 1; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+    #chatbot-views { display: flex; flex-grow: 1; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; }
     #chatbot-views.show-chat { transform: translateX(-100%); }
-    .chatbot-view { width: 100%; flex-shrink: 0; display: flex; flex-direction: column; }
+    .chatbot-view { width: 100%; flex-shrink: 0; display: flex; flex-direction: column; height: 100%; }
 
-    /* Home View - CRITICAL LAYOUT FIX */
+    /* Home View - CORRECTED LAYOUT */
     #view-home { background-color: #ffffff; }
-    .home-header {
-      padding: 32px 24px 24px; text-align: center; color: white; flex-shrink: 0;
-      background: var(--chatbot-primary-color);
-    }
+    .home-header { padding: 32px 24px 24px; text-align: center; color: white; flex-shrink: 0; background: var(--chatbot-primary-color); }
     .home-header h1 { font-size: 1.75rem; font-weight: 700; margin: 0 0 4px; }
     .home-header p { font-size: 0.95rem; opacity: 0.9; margin: 0; }
-    .conversation-list { flex-grow: 1; overflow-y: auto; padding: 8px 0; } /* Key change: Allow scrolling */
+    .conversation-list { flex-grow: 1; overflow-y: auto; } /* CRITICAL: This makes the list scrollable */
     .no-conversations { text-align: center; padding: 40px 24px; color: #6b7280; }
-    .conversation-item {
-        display: flex; align-items: center; padding: 14px 24px;
-        cursor: pointer; transition: background-color 0.2s; border-bottom: 1px solid #e5e7eb;
-    }
+    .conversation-item { display: flex; align-items: center; padding: 14px 24px; cursor: pointer; transition: background-color 0.2s; border-bottom: 1px solid #e5e7eb; }
     .conversation-item:hover { background-color: #f9fafb; }
     .conversation-item-details { flex-grow: 1; }
     .conversation-item strong { font-size: 1rem; color: #1f2937; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .conversation-item .timestamp { font-size: 0.8rem; color: #9ca3af; margin-top: 4px; }
-    .delete-convo-btn {
-      flex-shrink: 0; padding: 8px; margin-left: 12px; border-radius: 50%; border: none; background: none;
-      color: #9ca3af; cursor: pointer; transition: background-color 0.2s, color 0.2s;
-    }
+    .delete-convo-btn { flex-shrink: 0; padding: 8px; margin-left: 12px; border-radius: 50%; border: none; background: none; color: #9ca3af; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
     .delete-convo-btn:hover { background-color: #fee2e2; color: #dc2626; }
     .home-footer { padding: 16px; flex-shrink: 0; background-color: #ffffff; border-top: 1px solid #e5e7eb; }
-    .start-new-chat-btn {
-        display: block; width: 100%; padding: 14px; text-align: center; font-weight: 600;
-        background: var(--chatbot-primary-color); color: white; border: none; border-radius: 12px;
-        cursor: pointer; transition: background-color 0.2s;
-    }
+    .start-new-chat-btn { display: block; width: 100%; padding: 14px; text-align: center; font-weight: 600; background: var(--chatbot-primary-color); color: white; border: none; border-radius: 12px; cursor: pointer; transition: background-color 0.2s; }
 
-    /* Chat View */
+    /* Chat View - CORRECTED LAYOUT */
     #view-chat { display: flex; flex-direction: column; background-color: #ffffff; }
-    #chat-header {
-      padding: 16px 20px; color: #1f2937; flex-shrink: 0;
-      text-align: center; font-weight: 600; font-size: 1rem; border-bottom: 1px solid #e5e7eb;
-    }
-    #chat-box { flex: 1; overflow-y: auto; padding: 16px; background: #f9fafb; display: flex; flex-direction: column; gap: 12px; }
+    #chat-header { padding: 16px 20px; color: #1f2937; flex-shrink: 0; text-align: center; font-weight: 600; font-size: 1rem; border-bottom: 1px solid #e5e7eb; }
+    #chat-box { flex-grow: 1; overflow-y: auto; padding: 16px; background: #f9fafb; display: flex; flex-direction: column; gap: 12px; } /* CRITICAL: This makes the chat scrollable */
     .chatbot-message { padding: 10px 14px; border-radius: 18px; max-width: 85%; word-wrap: break-word; animation: message-in 0.3s ease-out; line-height: 1.5; }
     .chatbot-message.user { background: #e5e7eb; color: #1f2937; align-self: flex-end; border-bottom-right-radius: 4px; }
     .chatbot-message.bot { background: var(--chatbot-primary-color); color: white; align-self: flex-start; border-bottom-left-radius: 4px; }
     
     #chat-input-area { padding: 12px; border-top: 1px solid #e5e7eb; flex-shrink: 0; background: #fff; }
     #chat-input-container { position: relative; display: flex; align-items: center; }
-    #user-input {
-      width: 100%; padding: 12px 48px 12px 16px; border: 1px solid #d1d5db;
-      border-radius: 20px; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s;
-    }
+    #user-input { width: 100%; padding: 12px 48px 12px 16px; border: 1px solid #d1d5db; border-radius: 20px; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
     #user-input:focus { outline: none; border-color: var(--chatbot-primary-color); box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2); }
     #send-btn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; background-color: var(--chatbot-primary-color); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: background-color 0.2s; }
     
@@ -191,7 +172,7 @@
   const conversationList = document.querySelector("#view-home .conversation-list");
   const startNewChatBtn = document.querySelector(".start-new-chat-btn");
 
-  // ======= Core Functions =======
+  // ======= Core Functions (JS logic remains the same, only CSS/HTML structure changed) =======
 
   const saveConversations = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
   
@@ -237,26 +218,14 @@
     } else {
       sortedConvos.forEach(convo => {
         const firstUserMessage = convo.messages.find(m => m.sender === 'user')?.text || 'New Conversation';
-        
         const item = document.createElement('div');
         item.className = 'conversation-item';
-        
-        const details = document.createElement('div');
-        details.className = 'conversation-item-details';
-        details.innerHTML = `<strong>${firstUserMessage}</strong><div class="timestamp">${new Date(convo.createdAt).toLocaleString()}</div>`;
-        details.addEventListener('click', () => openConversation(convo.id));
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-convo-btn';
-        deleteBtn.innerHTML = trashIcon;
-        deleteBtn.ariaLabel = 'Delete conversation';
-        deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent opening the chat when clicking delete
-            deleteConversation(convo.id);
-        });
-
-        item.appendChild(details);
-        item.appendChild(deleteBtn);
+        item.innerHTML = `
+            <div class="conversation-item-details">
+                <strong>${firstUserMessage.replace(/</g, "<")}</strong>
+                <div class="timestamp">${new Date(convo.createdAt).toLocaleString()}</div>
+            </div>
+            <button class="delete-convo-btn" data-id="${convo.id}" aria-label="Delete conversation">${trashIcon}</button>`;
         conversationList.appendChild(item);
       });
     }
@@ -265,9 +234,7 @@
   const deleteConversation = (id) => {
     if (confirm("Are you sure you want to delete this conversation? This cannot be undone.")) {
       delete conversations[id];
-      if (activeConversationId === id) {
-        activeConversationId = null;
-      }
+      if (activeConversationId === id) activeConversationId = null;
       saveConversations();
       renderHomeScreen();
     }
@@ -311,7 +278,6 @@
   const sendMessage = async () => {
     const text = userInput.value.trim();
     if (!text || !activeConversationId) return;
-
     const userMessage = { sender: 'user', text: text };
     conversations[activeConversationId].messages.push(userMessage);
     displayMessage(text, 'user');
@@ -319,7 +285,6 @@
     userInput.value = "";
     userInput.focus();
     displayLoading();
-
     try {
       const responseText = await getEdenResponse(text);
       const botMessage = { sender: 'bot', text: responseText };
@@ -337,15 +302,9 @@
     if (!projectUUID) {
       return new Promise(resolve => setTimeout(() => resolve("This is a test response from the AI. Configure your `projectUUID` to get real answers."), 1000));
     }
-
-    const historyForAPI = conversations[activeConversationId].messages
-      .slice(0, -1)
-      .map(m => ({ user: m.sender === 'user' ? m.text : undefined, assistant: m.sender === 'bot' ? m.text : undefined }))
-      .filter(m => m.user || m.assistant);
-    
+    const historyForAPI = conversations[activeConversationId].messages.slice(0, -1).map(m => ({ user: m.sender === 'user' ? m.text : undefined, assistant: m.sender === 'bot' ? m.text : undefined })).filter(m => m.user || m.assistant);
     const url = `https://api.edenai.run/v2/aiproducts/askyoda/v2/${projectUUID}/ask_llm_project`;
     const payload = { query: text, llm_provider: provider, llm_model: model, history: historyForAPI, k, max_tokens, temperature };
-
     try {
       const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
@@ -364,6 +323,26 @@
   navHome.addEventListener('click', () => navigateTo('home'));
   navChat.addEventListener('click', () => navigateTo('chat'));
   startNewChatBtn.addEventListener('click', startNewConversation);
+  
+  // Event delegation for dynamically created elements
+  conversationList.addEventListener('click', (e) => {
+    const deleteButton = e.target.closest('.delete-convo-btn');
+    if (deleteButton) {
+        const convoId = parseInt(deleteButton.dataset.id, 10);
+        deleteConversation(convoId);
+        return;
+    }
+    const convoItem = e.target.closest('.conversation-item');
+    if (convoItem) {
+        // Since we can't easily get the ID from the element anymore, we'll find it by index
+        const allItems = Array.from(conversationList.children);
+        const index = allItems.indexOf(convoItem);
+        const sortedConvos = Object.values(conversations).sort((a,b) => b.createdAt - a.createdAt);
+        if(sortedConvos[index]) {
+            openConversation(sortedConvos[index].id);
+        }
+    }
+  });
 
   // ======= Initial Load =======
   loadConversations();
