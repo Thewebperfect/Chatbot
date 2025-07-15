@@ -1,18 +1,18 @@
 (function() {
   // ======= Configuration (overridden by global variables) =======
-  const primaryColor = window.chatbotColor || "#60A5FA"; // Softer blue from your image
-  const chatTitle = window.chatbotTitle || "VetFlash Support"; // Defaulted to your example
+  const primaryColor = window.chatbotColor || "#4299E1"; // Blue from the image
+  const chatTitle = window.chatbotTitle || "VetFlash Support";
   const projectUUID = window.chatbotProject || "";
 
   // Eden API fixed settings
   const provider = "google";
   const model = "gemini-1.5-flash-8b";
-  const max_tokens = 150;
+  const max_tokens = 400;
   const temperature = 0.7;
   const k = 1;
 
   // Local state for conversation history
-  const STORAGE_KEY = 'edenai_chatbot_conversations_v2';
+  const STORAGE_KEY = 'edenai_chatbot_conversations_v3';
   let conversations = {};
   let activeConversationId = null;
 
@@ -23,25 +23,14 @@
     document.head.appendChild(script);
   }
 
-  // ======= SVG Icons (New, Cleaner Set) =======
-  const mainIcon = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 28px; height: 28px;">
-      <path fill-rule="evenodd" d="M4.848 2.771A49.144 49.144 0 0112 2.25c2.43 0 4.817.178 7.152.52 1.978.292 3.348 2.024 3.348 3.97v6.02c0 1.946-1.37 3.678-3.348 3.97a48.901 48.901 0 01-3.476.383.39.39 0 00-.297.15l-2.755 4.133a.75.75 0 01-1.248 0l-2.755-4.133a.39.39 0 00-.297-.15 48.9 48.9 0 01-3.476-.384c-1.978-.29-3.348-2.024-3.348-3.97V6.741c0-1.946 1.37-3.68 3.348-3.97zM6.75 8.25a.75.75 0 01.75-.75h9a.75.75 0 010 1.5h-9a.75.75 0 01-.75-.75zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H7.5z" clip-rule="evenodd" />
-    </svg>
-  `;
-  const closeIcon = `
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width: 28px; height: 28px;">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-    </svg>
-  `;
-  const sendIcon = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 22px; height: 22px;">
-      <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-    </svg>
-  `;
+  // ======= SVG Icons =======
+  const mainIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 28px; height: 28px;"><path fill-rule="evenodd" d="M4.848 2.771A49.144 49.144 0 0112 2.25c2.43 0 4.817.178 7.152.52 1.978.292 3.348 2.024 3.348 3.97v6.02c0 1.946-1.37 3.678-3.348 3.97a48.901 48.901 0 01-3.476.383.39.39 0 00-.297.15l-2.755 4.133a.75.75 0 01-1.248 0l-2.755-4.133a.39.39 0 00-.297-.15 48.9 48.9 0 01-3.476-.384c-1.978-.29-3.348-2.024-3.348-3.97V6.741c0-1.946 1.37-3.68 3.348-3.97zM6.75 8.25a.75.75 0 01.75-.75h9a.75.75 0 010 1.5h-9a.75.75 0 01-.75-.75zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H7.5z" clip-rule="evenodd" /></svg>`;
+  const closeIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width: 24px; height: 24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
+  const sendIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 22px; height: 22px;"><path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" /></svg>`;
   const homeIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px;"><path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z" /><path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z" /></svg>`;
   const chatIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px;"><path fill-rule="evenodd" d="M4.848 2.771A49.144 49.144 0 0112 2.25c2.43 0 4.817.178 7.152.52 1.978.292 3.348 2.024 3.348 3.97v6.02c0 1.946-1.37 3.678-3.348 3.97a48.901 48.901 0 01-3.476.383.39.39 0 00-.297.15l-2.755 4.133a.75.75 0 01-1.248 0l-2.755-4.133a.39.39 0 00-.297-.15 48.9 48.9 0 01-3.476-.384c-1.978-.29-3.348-2.024-3.348-3.97V6.741c0-1.946 1.37-3.68 3.348-3.97zM6.75 8.25a.75.75 0 01.75-.75h9a.75.75 0 010 1.5h-9a.75.75 0 01-.75-.75zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H7.5z" clip-rule="evenodd" /></svg>`;
-  
+  const trashIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px;"><path fill-rule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 013.878.512.75.75 0 11-.256 1.478l-.209-.035-1.005 13.006a.75.75 0 01-.749.654H5.89a.75.75 0 01-.749-.654L4.135 6.68l-.209.035a.75.75 0 01-.256-1.478A48.567 48.567 0 017.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 013.369 0c1.603.051 2.815 1.387 2.815 2.951zm-6.136-1.452a51.196 51.196 0 013.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 00-6 0v-.113c0-.794.609-1.428 1.364-1.452z" clip-rule="evenodd" /></svg>`;
+
   // ======= CSS Styles =======
   const chatbotStyles = `
     :root {
@@ -60,7 +49,7 @@
     #chatbot-toggle-button .icon.close { transform: rotate(-90deg) scale(0.5); opacity: 0; }
     #chatbot-container {
       position: fixed; bottom: 90px; right: 20px; width: 380px; height: 70vh; max-height: 600px;
-      background: #f3f4f6; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); border-radius: 16px;
+      background: #ffffff; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); border-radius: 16px;
       display: flex; flex-direction: column; overflow: hidden; z-index: 1000;
       font-family: var(--chatbot-font); transform-origin: bottom right;
       transition: transform 0.3s ease-out, opacity 0.3s ease-out;
@@ -75,42 +64,46 @@
     #chatbot-views.show-chat { transform: translateX(-100%); }
     .chatbot-view { width: 100%; flex-shrink: 0; display: flex; flex-direction: column; }
 
-    /* Home View */
-    #view-home { background-color: #f3f4f6; }
+    /* Home View - CRITICAL LAYOUT FIX */
+    #view-home { background-color: #ffffff; }
     .home-header {
       padding: 32px 24px 24px; text-align: center; color: white; flex-shrink: 0;
       background: var(--chatbot-primary-color);
     }
     .home-header h1 { font-size: 1.75rem; font-weight: 700; margin: 0 0 4px; }
     .home-header p { font-size: 0.95rem; opacity: 0.9; margin: 0; }
-    .conversation-list { flex-grow: 1; overflow-y: auto; padding: 16px; }
-    .no-conversations { text-align: center; padding: 40px; color: #6b7280; }
+    .conversation-list { flex-grow: 1; overflow-y: auto; padding: 8px 0; } /* Key change: Allow scrolling */
+    .no-conversations { text-align: center; padding: 40px 24px; color: #6b7280; }
     .conversation-item {
-        padding: 16px; margin-bottom: 12px; border-radius: 12px;
-        cursor: pointer; transition: background-color 0.2s, box-shadow 0.2s;
-        background-color: #fff; border: 1px solid #e5e7eb;
+        display: flex; align-items: center; padding: 14px 24px;
+        cursor: pointer; transition: background-color 0.2s; border-bottom: 1px solid #e5e7eb;
     }
-    .conversation-item:hover { background-color: #fafafa; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .conversation-item:hover { background-color: #f9fafb; }
+    .conversation-item-details { flex-grow: 1; }
     .conversation-item strong { font-size: 1rem; color: #1f2937; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .conversation-item .timestamp { font-size: 0.8rem; color: #9ca3af; margin-top: 4px; }
+    .delete-convo-btn {
+      flex-shrink: 0; padding: 8px; margin-left: 12px; border-radius: 50%; border: none; background: none;
+      color: #9ca3af; cursor: pointer; transition: background-color 0.2s, color 0.2s;
+    }
+    .delete-convo-btn:hover { background-color: #fee2e2; color: #dc2626; }
+    .home-footer { padding: 16px; flex-shrink: 0; background-color: #ffffff; border-top: 1px solid #e5e7eb; }
     .start-new-chat-btn {
-        display: block; width: auto; margin: 0 16px 16px; padding: 14px; text-align: center; font-weight: 600;
+        display: block; width: 100%; padding: 14px; text-align: center; font-weight: 600;
         background: var(--chatbot-primary-color); color: white; border: none; border-radius: 12px;
-        cursor: pointer; transition: background-color 0.2s; flex-shrink: 0;
+        cursor: pointer; transition: background-color 0.2s;
     }
 
     /* Chat View */
-    #view-chat { background-color: #ffffff; }
+    #view-chat { display: flex; flex-direction: column; background-color: #ffffff; }
     #chat-header {
-      padding: 16px 20px; background: #fff; color: #1f2937; flex-shrink: 0;
+      padding: 16px 20px; color: #1f2937; flex-shrink: 0;
       text-align: center; font-weight: 600; font-size: 1rem; border-bottom: 1px solid #e5e7eb;
     }
     #chat-box { flex: 1; overflow-y: auto; padding: 16px; background: #f9fafb; display: flex; flex-direction: column; gap: 12px; }
     .chatbot-message { padding: 10px 14px; border-radius: 18px; max-width: 85%; word-wrap: break-word; animation: message-in 0.3s ease-out; line-height: 1.5; }
     .chatbot-message.user { background: #e5e7eb; color: #1f2937; align-self: flex-end; border-bottom-right-radius: 4px; }
     .chatbot-message.bot { background: var(--chatbot-primary-color); color: white; align-self: flex-start; border-bottom-left-radius: 4px; }
-    .chatbot-message.bot a { color: #f0f0f0; text-decoration: underline; }
-    .chatbot-message.bot p { margin: 0.5em 0; } .chatbot-message.bot p:first-child { margin-top: 0; } .chatbot-message.bot p:last-child { margin-bottom: 0; }
     
     #chat-input-area { padding: 12px; border-top: 1px solid #e5e7eb; flex-shrink: 0; background: #fff; }
     #chat-input-container { position: relative; display: flex; align-items: center; }
@@ -119,20 +112,12 @@
       border-radius: 20px; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s;
     }
     #user-input:focus { outline: none; border-color: var(--chatbot-primary-color); box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2); }
-    #send-btn {
-      position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px;
-      background-color: var(--chatbot-primary-color); color: white; border: none; border-radius: 50%;
-      cursor: pointer; display: flex; justify-content: center; align-items: center; transition: background-color 0.2s;
-    }
+    #send-btn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; background-color: var(--chatbot-primary-color); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: background-color 0.2s; }
     
-    /* Footer */
+    /* Footer Navigation */
     #chatbot-footer { display: flex; border-top: 1px solid #d1d5db; background: #f9fafb; flex-shrink: 0; }
-    .footer-btn {
-      flex: 1; padding: 12px; display: flex; flex-direction: column; align-items: center;
-      gap: 4px; cursor: pointer; color: #6b7280; transition: color 0.2s; border: none; background: none;
-    }
+    .footer-btn { flex: 1; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; color: #6b7280; transition: color 0.2s; border: none; background: none; }
     .footer-btn span { font-size: 0.75rem; font-weight: 500; }
-    .footer-btn:hover { color: #1f2937; }
     .footer-btn.active { color: var(--chatbot-primary-color); }
 
     @keyframes message-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -158,7 +143,9 @@
               <p>How can ${chatTitle} help?</p>
             </div>
             <div class="conversation-list"></div>
-            <button class="start-new-chat-btn">Start a New Conversation</button>
+            <div class="home-footer">
+              <button class="start-new-chat-btn">Start a New Conversation</button>
+            </div>
           </div>
           <!-- Chat View -->
           <div id="view-chat" class="chatbot-view">
@@ -202,7 +189,7 @@
   const navHome = document.getElementById("nav-home");
   const navChat = document.getElementById("nav-chat");
   const conversationList = document.querySelector("#view-home .conversation-list");
-  const startNewChatBtn = document.querySelector("#view-home .start-new-chat-btn");
+  const startNewChatBtn = document.querySelector(".start-new-chat-btn");
 
   // ======= Core Functions =======
 
@@ -225,13 +212,9 @@
   const navigateTo = (view) => {
     if (view === 'chat') {
       if (!activeConversationId) {
-        // If no chat is active, try to open the most recent one
         const sortedConvos = Object.values(conversations).sort((a,b) => b.createdAt - a.createdAt);
-        if (sortedConvos.length > 0) {
-          openConversation(sortedConvos[0].id);
-        } else {
-          return; // or start a new one: startNewConversation();
-        }
+        if (sortedConvos.length > 0) openConversation(sortedConvos[0].id);
+        else return;
       }
       viewsContainer.classList.add('show-chat');
       navChat.classList.add('active');
@@ -254,15 +237,42 @@
     } else {
       sortedConvos.forEach(convo => {
         const firstUserMessage = convo.messages.find(m => m.sender === 'user')?.text || 'New Conversation';
+        
         const item = document.createElement('div');
         item.className = 'conversation-item';
-        item.innerHTML = `<strong>${firstUserMessage}</strong><div class="timestamp">${new Date(convo.createdAt).toLocaleString()}</div>`;
-        item.addEventListener('click', () => openConversation(convo.id));
+        
+        const details = document.createElement('div');
+        details.className = 'conversation-item-details';
+        details.innerHTML = `<strong>${firstUserMessage}</strong><div class="timestamp">${new Date(convo.createdAt).toLocaleString()}</div>`;
+        details.addEventListener('click', () => openConversation(convo.id));
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-convo-btn';
+        deleteBtn.innerHTML = trashIcon;
+        deleteBtn.ariaLabel = 'Delete conversation';
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent opening the chat when clicking delete
+            deleteConversation(convo.id);
+        });
+
+        item.appendChild(details);
+        item.appendChild(deleteBtn);
         conversationList.appendChild(item);
       });
     }
   };
   
+  const deleteConversation = (id) => {
+    if (confirm("Are you sure you want to delete this conversation? This cannot be undone.")) {
+      delete conversations[id];
+      if (activeConversationId === id) {
+        activeConversationId = null;
+      }
+      saveConversations();
+      renderHomeScreen();
+    }
+  };
+
   const openConversation = (id) => {
     activeConversationId = id;
     const conversation = conversations[id];
