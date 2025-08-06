@@ -57,18 +57,16 @@
     #chatbot-container.chatbot-open + #chatbot-toggle-button .icon.main { transform: rotate(90deg) scale(0.5); opacity: 0; }
     #chatbot-container.chatbot-open + #chatbot-toggle-button .icon.close { transform: rotate(0deg) scale(1); opacity: 1; }
     
-    /* CORE LAYOUT: Main container uses flex to manage its direct children */
     #chatbot-main { display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; }
     #chatbot-views { display: flex; flex-grow: 1; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
     #chatbot-views.show-chat { transform: translateX(-100%); }
     .chatbot-view { width: 100%; flex-shrink: 0; display: flex; flex-direction: column; }
 
-    /* Home View - ROBUST SCROLLING LAYOUT */
     #view-home { background-color: #ffffff; }
-    .home-header { padding: 32px 24px 24px; text-align: center; color: white; flex-shrink: 0; background: var(--chatbot-primary-color); } /* FIX: flex-shrink: 0 prevents header from shrinking */
+    .home-header { padding: 32px 24px 24px; text-align: center; color: white; flex-shrink: 0; background: var(--chatbot-primary-color); }
     .home-header h1 { font-size: 1.75rem; font-weight: 700; margin: 0 0 4px; }
     .home-header p { font-size: 0.95rem; opacity: 0.9; margin: 0; }
-    .conversation-list { flex: 1 1 0; overflow-y: auto; } /* FIX: This makes the list scrollable and fill available space */
+    .conversation-list { flex: 1 1 0; overflow-y: auto; }
     .no-conversations { text-align: center; padding: 40px 24px; color: #6b7280; }
     .conversation-item { display: flex; align-items: center; padding: 14px 24px; cursor: pointer; transition: background-color 0.2s; border-bottom: 1px solid #e5e7eb; }
     .conversation-item:hover { background-color: #f9fafb; }
@@ -77,13 +75,12 @@
     .conversation-item .timestamp { font-size: 0.8rem; color: #9ca3af; margin-top: 4px; }
     .delete-convo-btn { flex-shrink: 0; padding: 8px; margin-left: 12px; border-radius: 50%; border: none; background: none; color: #9ca3af; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
     .delete-convo-btn:hover { background-color: #fee2e2; color: #dc2626; }
-    .home-footer { padding: 16px; flex-shrink: 0; background-color: #ffffff; border-top: 1px solid #e5e7eb; } /* FIX: flex-shrink: 0 prevents footer from shrinking */
+    .home-footer { padding: 16px; flex-shrink: 0; background-color: #ffffff; border-top: 1px solid #e5e7eb; }
 
-    /* Chat View - ROBUST SCROLLING LAYOUT */
     #view-chat { background-color: #ffffff; }
-    #chat-header { padding: 16px 20px; color: #1f2937; flex-shrink: 0; text-align: center; font-weight: 600; font-size: 1rem; border-bottom: 1px solid #e5e7eb; } /* FIX: flex-shrink: 0 prevents header from shrinking */
-    #chat-box { flex: 1 1 0; overflow-y: auto; padding: 16px; background: #f9fafb; display: flex; flex-direction: column; gap: 12px; } /* FIX: This makes the chat scrollable and fill available space */
-    #chat-input-area { padding: 12px; border-top: 1px solid #e5e7eb; flex-shrink: 0; background: #fff; } /* FIX: flex-shrink: 0 prevents input area from shrinking */
+    #chat-header { padding: 16px 20px; color: #1f2937; flex-shrink: 0; text-align: center; font-weight: 600; font-size: 1rem; border-bottom: 1px solid #e5e7eb; }
+    #chat-box { flex: 1 1 0; overflow-y: auto; padding: 16px; background: #f9fafb; display: flex; flex-direction: column; gap: 12px; }
+    #chat-input-area { padding: 12px; border-top: 1px solid #e5e7eb; flex-shrink: 0; background: #fff; }
 
     .start-new-chat-btn { display: block; width: 100%; padding: 14px; text-align: center; font-weight: 600; background: var(--chatbot-primary-color); color: white; border: none; border-radius: 12px; cursor: pointer; transition: background-color 0.2s; }
     .chatbot-message { padding: 10px 14px; border-radius: 18px; max-width: 85%; word-wrap: break-word; animation: message-in 0.3s ease-out; line-height: 1.5; }
@@ -95,7 +92,6 @@
     #user-input:focus { outline: none; border-color: var(--chatbot-primary-color); box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2); }
     #send-btn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; background-color: var(--chatbot-primary-color); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: background-color 0.2s; }
     
-    /* Footer Navigation */
     #chatbot-footer { display: flex; border-top: 1px solid #d1d5db; background: #f9fafb; flex-shrink: 0; }
     .footer-btn { flex: 1; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; color: #6b7280; transition: color 0.2s; border: none; background: none; }
     .footer-btn span { font-size: 0.75rem; font-weight: 500; }
@@ -191,21 +187,19 @@
   const navigateTo = (view) => {
     if (view === 'chat') {
       if (!activeConversationId) {
-        // If no chat is active, try to open the latest one
         const sortedConvos = Object.values(conversations).sort((a,b) => b.createdAt - a.createdAt);
         if (sortedConvos.length > 0) {
-          openConversation(sortedConvos[0].id, false); // Open without navigating again
+          openConversation(sortedConvos[0].id, false);
         } else {
-          // UX FIX: If no conversations exist at all, start a new one automatically
           startNewConversation();
-          return; // startNewConversation handles navigation
+          return;
         }
       }
       viewsContainer.classList.add('show-chat');
       navChat.classList.add('active');
       navHome.classList.remove('active');
       userInput.focus();
-    } else { // 'home' view
+    } else {
       viewsContainer.classList.remove('show-chat');
       navHome.classList.add('active');
       navChat.classList.remove('active');
@@ -224,11 +218,10 @@
         const item = document.createElement('div');
         item.className = 'conversation-item';
         item.dataset.id = convo.id;
-        // SECURITY FIX: Use textContent to prevent HTML injection from user messages
         const detailsDiv = document.createElement('div');
         detailsDiv.className = 'conversation-item-details';
         const strongEl = document.createElement('strong');
-        strongEl.textContent = firstUserMessage; // Safely set text content
+        strongEl.textContent = firstUserMessage;
         const timestampDiv = document.createElement('div');
         timestampDiv.className = 'timestamp';
         timestampDiv.textContent = new Date(convo.createdAt).toLocaleString();
@@ -247,9 +240,8 @@
       delete conversations[id];
       if (activeConversationId === id) {
         activeConversationId = null;
-        // If we delete the active chat, clear the chat view
         chatBox.innerHTML = '';
-        navChat.classList.remove('active'); // De-activate chat nav
+        navChat.classList.remove('active');
       }
       saveConversations();
       renderHomeScreen();
@@ -270,17 +262,15 @@
     activeConversationId = newId;
     conversations[newId] = { id: newId, messages: [], createdAt: newId };
     saveConversations();
-    openConversation(newId, true); // Explicitly navigate to the new chat
+    openConversation(newId, true);
   };
   
   const displayMessage = (text, sender, isNew = true) => {
     const messageDiv = document.createElement("div");
     messageDiv.classList.add("chatbot-message", sender);
     if (sender === 'bot') {
-      // Use marked for bot responses, as it's trusted to render markdown
       messageDiv.innerHTML = typeof marked !== "undefined" ? marked.parse(text) : text;
     } else {
-      // SECURITY FIX: Always use textContent for user input to prevent XSS
       messageDiv.textContent = text;
     }
     chatBox.appendChild(messageDiv);
@@ -300,17 +290,13 @@
   const sendMessage = async () => {
     const text = userInput.value.trim();
     if (!text || !activeConversationId) return;
-
     const userMessage = { sender: 'user', text };
     conversations[activeConversationId].messages.push(userMessage);
     displayMessage(text, 'user');
     userInput.value = "";
     userInput.focus();
     displayLoading();
-    
-    // Save immediately so user message isn't lost on refresh
-    saveConversations(); 
-
+    saveConversations();
     try {
       const responseText = await getEdenResponse(text);
       conversations[activeConversationId].messages.push({ sender: 'bot', text: responseText });
@@ -323,31 +309,34 @@
       removeLoading();
       displayMessage(`Sorry, an error occurred: ${errorMessage}`, 'bot');
     } finally {
-        saveConversations(); // Save after bot response or error
+        saveConversations();
     }
   };
-
+  
+  // ======= API Function (HISTORY FORMAT CORRECTED) =======
   const getEdenResponse = async (text) => {
     if (!projectUUID) {
       return new Promise(resolve => setTimeout(() => resolve("This is a test response. Please set `window.chatbotProject` to connect to a real Eden AI project."), 1000));
     }
+    
+    // ** FIX: Create history in the format the API expects **
     const historyForAPI = [];
-    // Get all messages except the last one (which is the new user query)
-    const messages = conversations[activeConversationId].messages.slice(0, -1); 
+    const messages = conversations[activeConversationId].messages.slice(0, -1);
+    
     for (let i = 0; i < messages.length; i += 2) {
       if (messages[i]?.sender === 'user' && messages[i+1]?.sender === 'bot') {
-        historyForAPI.push({ role: 'user', message: messages[i].text }, { role: 'assistant', message: messages[i+1].text });
+        historyForAPI.push({ 
+          user: messages[i].text, 
+          assistant: messages[i+1].text 
+        });
       }
     }
-    // Note: The Eden AI /ask_llm_project endpoint expects a different history format.
-    // Let's assume a simpler format based on common patterns. If their docs specify, adjust this.
-    const simplifiedHistory = historyForAPI.map(h => ({ [h.role]: h.message }));
 
     const payload = {
         query: text,
         llm_provider: provider,
         llm_model: model,
-        history: simplifiedHistory,
+        history: historyForAPI, // Use the correctly formatted history
         k,
         max_tokens,
         temperature
@@ -361,7 +350,8 @@
 
     if (!response.ok) {
         const errData = await response.json();
-        const errMsg = errData.error?.message?.history?.[0] || errData.error?.message || `API Error: ${response.statusText}`;
+        // Extract the most specific error message available from the API response
+        const errMsg = errData.error?.message?.history?.[0] || errData.error?.message?.detail || errData.error?.message || `API Error: ${response.statusText}`;
         throw new Error(errMsg);
     }
 
@@ -381,10 +371,9 @@
     const target = e.target;
     const convoItem = target.closest('.conversation-item');
     if (!convoItem) return;
-
     const id = parseInt(convoItem.dataset.id, 10);
     if (target.closest('.delete-convo-btn')) {
-      e.stopPropagation(); // Prevent opening the chat when clicking delete
+      e.stopPropagation();
       deleteConversation(id);
     } else {
       openConversation(id);
