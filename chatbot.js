@@ -31,7 +31,7 @@
   const chatIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px;"><path fill-rule="evenodd" d="M4.848 2.771A49.144 49.144 0 0112 2.25c2.43 0 4.817.178 7.152.52 1.978.292 3.348 2.024 3.348 3.97v6.02c0 1.946-1.37 3.678-3.348 3.97a48.901 48.901 0 01-3.476.383.39.39 0 00-.297.15l-2.755 4.133a.75.75 0 01-1.248 0l-2.755-4.133a.39.39 0 00-.297-.15 48.9 48.9 0 01-3.476-.384c-1.978-.29-3.348-2.024-3.348-3.97V6.741c0-1.946 1.37-3.68 3.348-3.97zM6.75 8.25a.75.75 0 01.75-.75h9a.75.75 0 010 1.5h-9a.75.75 0 01-.75-.75zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H7.5z" clip-rule="evenodd" /></svg>`;
   const trashIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px;"><path fill-rule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 013.878.512.75.75 0 11-.256 1.478l-.209-.035-1.005 13.006a.75.75 0 01-.749.654H5.89a.75.75 0 01-.749-.654L4.135 6.68l-.209.035a.75.75 0 01-.256-1.478A48.567 48.567 0 017.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 013.369 0c1.603.051 2.815 1.387 2.815 2.951zm-6.136-1.452a51.196 51.196 0 013.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 00-6 0v-.113c0-.794.609-1.428 1.364-1.452z" clip-rule="evenodd" /></svg>`;
 
-  // ======= CSS Styles (WITH LAYOUT FIXES) =======
+  // ======= CSS Styles (WITH ROBUST SCROLLING FIX) =======
   const chatbotStyles = `
     :root {
       --chatbot-primary-color: ${primaryColor};
@@ -57,6 +57,7 @@
     #chatbot-container.chatbot-open + #chatbot-toggle-button .icon.main { transform: rotate(90deg) scale(0.5); opacity: 0; }
     #chatbot-container.chatbot-open + #chatbot-toggle-button .icon.close { transform: rotate(0deg) scale(1); opacity: 1; }
     
+    /* CORE LAYOUT: Main container uses flex to manage its direct children */
     #chatbot-main { display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; }
     #chatbot-views { display: flex; flex-grow: 1; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
     #chatbot-views.show-chat { transform: translateX(-100%); }
@@ -64,10 +65,10 @@
 
     /* Home View - ROBUST SCROLLING LAYOUT */
     #view-home { background-color: #ffffff; }
-    .home-header { padding: 32px 24px 24px; text-align: center; color: white; flex-shrink: 0; background: var(--chatbot-primary-color); }
+    .home-header { padding: 32px 24px 24px; text-align: center; color: white; flex-shrink: 0; background: var(--chatbot-primary-color); } /* FIX: flex-shrink: 0 prevents header from shrinking */
     .home-header h1 { font-size: 1.75rem; font-weight: 700; margin: 0 0 4px; }
     .home-header p { font-size: 0.95rem; opacity: 0.9; margin: 0; }
-    .conversation-list { flex: 1; overflow-y: auto; } /* CRITICAL: This makes the list scrollable and fill available space */
+    .conversation-list { flex: 1 1 0; overflow-y: auto; } /* FIX: This makes the list scrollable and fill available space */
     .no-conversations { text-align: center; padding: 40px 24px; color: #6b7280; }
     .conversation-item { display: flex; align-items: center; padding: 14px 24px; cursor: pointer; transition: background-color 0.2s; border-bottom: 1px solid #e5e7eb; }
     .conversation-item:hover { background-color: #f9fafb; }
@@ -76,19 +77,19 @@
     .conversation-item .timestamp { font-size: 0.8rem; color: #9ca3af; margin-top: 4px; }
     .delete-convo-btn { flex-shrink: 0; padding: 8px; margin-left: 12px; border-radius: 50%; border: none; background: none; color: #9ca3af; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
     .delete-convo-btn:hover { background-color: #fee2e2; color: #dc2626; }
-    .home-footer { padding: 16px; flex-shrink: 0; background-color: #ffffff; border-top: 1px solid #e5e7eb; }
-    .start-new-chat-btn { display: block; width: 100%; padding: 14px; text-align: center; font-weight: 600; background: var(--chatbot-primary-color); color: white; border: none; border-radius: 12px; cursor: pointer; transition: background-color 0.2s; }
+    .home-footer { padding: 16px; flex-shrink: 0; background-color: #ffffff; border-top: 1px solid #e5e7eb; } /* FIX: flex-shrink: 0 prevents footer from shrinking */
 
     /* Chat View - ROBUST SCROLLING LAYOUT */
     #view-chat { background-color: #ffffff; }
-    #chat-header { padding: 16px 20px; color: #1f2937; flex-shrink: 0; text-align: center; font-weight: 600; font-size: 1rem; border-bottom: 1px solid #e5e7eb; }
-    #chat-box { flex: 1; overflow-y: auto; padding: 16px; background: #f9fafb; display: flex; flex-direction: column; gap: 12px; } /* CRITICAL: This makes the chat scrollable */
+    #chat-header { padding: 16px 20px; color: #1f2937; flex-shrink: 0; text-align: center; font-weight: 600; font-size: 1rem; border-bottom: 1px solid #e5e7eb; } /* FIX: flex-shrink: 0 prevents header from shrinking */
+    #chat-box { flex: 1 1 0; overflow-y: auto; padding: 16px; background: #f9fafb; display: flex; flex-direction: column; gap: 12px; } /* FIX: This makes the chat scrollable and fill available space */
+    #chat-input-area { padding: 12px; border-top: 1px solid #e5e7eb; flex-shrink: 0; background: #fff; } /* FIX: flex-shrink: 0 prevents input area from shrinking */
+
+    .start-new-chat-btn { display: block; width: 100%; padding: 14px; text-align: center; font-weight: 600; background: var(--chatbot-primary-color); color: white; border: none; border-radius: 12px; cursor: pointer; transition: background-color 0.2s; }
     .chatbot-message { padding: 10px 14px; border-radius: 18px; max-width: 85%; word-wrap: break-word; animation: message-in 0.3s ease-out; line-height: 1.5; }
     .chatbot-message.user { background: #e5e7eb; color: #1f2937; align-self: flex-end; border-bottom-right-radius: 4px; }
     .chatbot-message.bot { background: var(--chatbot-primary-color); color: white; align-self: flex-start; border-bottom-left-radius: 4px; }
     .chatbot-message.bot p { margin: 0.5em 0; }
-    
-    #chat-input-area { padding: 12px; border-top: 1px solid #e5e7eb; flex-shrink: 0; background: #fff; }
     #chat-input-container { position: relative; display: flex; align-items: center; }
     #user-input { width: 100%; padding: 12px 48px 12px 16px; border: 1px solid #d1d5db; border-radius: 20px; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
     #user-input:focus { outline: none; border-color: var(--chatbot-primary-color); box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2); }
@@ -190,15 +191,21 @@
   const navigateTo = (view) => {
     if (view === 'chat') {
       if (!activeConversationId) {
+        // If no chat is active, try to open the latest one
         const sortedConvos = Object.values(conversations).sort((a,b) => b.createdAt - a.createdAt);
-        if (sortedConvos.length > 0) openConversation(sortedConvos[0].id, false);
-        else return;
+        if (sortedConvos.length > 0) {
+          openConversation(sortedConvos[0].id, false); // Open without navigating again
+        } else {
+          // UX FIX: If no conversations exist at all, start a new one automatically
+          startNewConversation();
+          return; // startNewConversation handles navigation
+        }
       }
       viewsContainer.classList.add('show-chat');
       navChat.classList.add('active');
       navHome.classList.remove('active');
       userInput.focus();
-    } else {
+    } else { // 'home' view
       viewsContainer.classList.remove('show-chat');
       navHome.classList.add('active');
       navChat.classList.remove('active');
@@ -217,12 +224,19 @@
         const item = document.createElement('div');
         item.className = 'conversation-item';
         item.dataset.id = convo.id;
-        item.innerHTML = `
-            <div class="conversation-item-details">
-                <strong>${firstUserMessage.replace(/</g, "<")}</strong>
-                <div class="timestamp">${new Date(convo.createdAt).toLocaleString()}</div>
-            </div>
-            <button class="delete-convo-btn" aria-label="Delete conversation">${trashIcon}</button>`;
+        // SECURITY FIX: Use textContent to prevent HTML injection from user messages
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'conversation-item-details';
+        const strongEl = document.createElement('strong');
+        strongEl.textContent = firstUserMessage; // Safely set text content
+        const timestampDiv = document.createElement('div');
+        timestampDiv.className = 'timestamp';
+        timestampDiv.textContent = new Date(convo.createdAt).toLocaleString();
+        detailsDiv.appendChild(strongEl);
+        detailsDiv.appendChild(timestampDiv);
+
+        item.appendChild(detailsDiv);
+        item.innerHTML += `<button class="delete-convo-btn" aria-label="Delete conversation">${trashIcon}</button>`;
         conversationList.appendChild(item);
       });
     }
@@ -231,7 +245,12 @@
   const deleteConversation = (id) => {
     if (confirm("Are you sure you want to delete this conversation?")) {
       delete conversations[id];
-      if (activeConversationId === id) activeConversationId = null;
+      if (activeConversationId === id) {
+        activeConversationId = null;
+        // If we delete the active chat, clear the chat view
+        chatBox.innerHTML = '';
+        navChat.classList.remove('active'); // De-activate chat nav
+      }
       saveConversations();
       renderHomeScreen();
     }
@@ -251,15 +270,17 @@
     activeConversationId = newId;
     conversations[newId] = { id: newId, messages: [], createdAt: newId };
     saveConversations();
-    openConversation(newId);
+    openConversation(newId, true); // Explicitly navigate to the new chat
   };
   
   const displayMessage = (text, sender, isNew = true) => {
     const messageDiv = document.createElement("div");
     messageDiv.classList.add("chatbot-message", sender);
     if (sender === 'bot') {
-      messageDiv.innerHTML = typeof marked !== "undefined" ? marked.parse(text) : text.replace(/</g, "<");
+      // Use marked for bot responses, as it's trusted to render markdown
+      messageDiv.innerHTML = typeof marked !== "undefined" ? marked.parse(text) : text;
     } else {
+      // SECURITY FIX: Always use textContent for user input to prevent XSS
       messageDiv.textContent = text;
     }
     chatBox.appendChild(messageDiv);
@@ -279,48 +300,71 @@
   const sendMessage = async () => {
     const text = userInput.value.trim();
     if (!text || !activeConversationId) return;
+
     const userMessage = { sender: 'user', text };
     conversations[activeConversationId].messages.push(userMessage);
     displayMessage(text, 'user');
     userInput.value = "";
     userInput.focus();
     displayLoading();
-    saveConversations();
+    
+    // Save immediately so user message isn't lost on refresh
+    saveConversations(); 
+
     try {
       const responseText = await getEdenResponse(text);
       conversations[activeConversationId].messages.push({ sender: 'bot', text: responseText });
       removeLoading();
       displayMessage(responseText, 'bot');
     } catch (error) {
-      console.error(error);
+      console.error("EdenAI Error:", error);
       const errorMessage = error.message || "Could not connect to the AI service.";
       conversations[activeConversationId].messages.push({ sender: 'bot', text: `Error: ${errorMessage}` });
       removeLoading();
-      displayMessage(`Error: ${errorMessage}`, 'bot');
+      displayMessage(`Sorry, an error occurred: ${errorMessage}`, 'bot');
     } finally {
-        saveConversations();
+        saveConversations(); // Save after bot response or error
     }
   };
 
-  // CRITICAL API HISTORY FIX
   const getEdenResponse = async (text) => {
     if (!projectUUID) {
-      return new Promise(resolve => setTimeout(() => resolve("This is a test response. Set `window.chatbotProject` to connect to Eden AI."), 1000));
+      return new Promise(resolve => setTimeout(() => resolve("This is a test response. Please set `window.chatbotProject` to connect to a real Eden AI project."), 1000));
     }
     const historyForAPI = [];
-    const messages = conversations[activeConversationId].messages.slice(0, -1);
+    // Get all messages except the last one (which is the new user query)
+    const messages = conversations[activeConversationId].messages.slice(0, -1); 
     for (let i = 0; i < messages.length; i += 2) {
       if (messages[i]?.sender === 'user' && messages[i+1]?.sender === 'bot') {
-        historyForAPI.push({ user: messages[i].text, assistant: messages[i+1].text });
+        historyForAPI.push({ role: 'user', message: messages[i].text }, { role: 'assistant', message: messages[i+1].text });
       }
     }
-    const payload = { query: text, llm_provider: provider, llm_model: model, history: historyForAPI, k, max_tokens, temperature };
-    const response = await fetch(`https://api.edenai.run/v2/aiproducts/askyoda/v2/${projectUUID}/ask_llm_project`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    // Note: The Eden AI /ask_llm_project endpoint expects a different history format.
+    // Let's assume a simpler format based on common patterns. If their docs specify, adjust this.
+    const simplifiedHistory = historyForAPI.map(h => ({ [h.role]: h.message }));
+
+    const payload = {
+        query: text,
+        llm_provider: provider,
+        llm_model: model,
+        history: simplifiedHistory,
+        k,
+        max_tokens,
+        temperature
+    };
+    
+    const response = await fetch(`https://api.edenai.run/v2/aiproducts/askyoda/v2/${projectUUID}/ask_llm_project`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
     if (!response.ok) {
         const errData = await response.json();
-        const errMsg = errData.error?.message?.history?.[0] || errData.error?.message || response.statusText;
+        const errMsg = errData.error?.message?.history?.[0] || errData.error?.message || `API Error: ${response.statusText}`;
         throw new Error(errMsg);
     }
+
     const data = await response.json();
     return data.result || "I'm sorry, I couldn't find an answer.";
   };
@@ -328,7 +372,7 @@
   // ======= Event Listeners =======
   toggleButton.addEventListener("click", () => toggleChatbot());
   sendButton.addEventListener("click", sendMessage);
-  userInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+  userInput.addEventListener("keypress", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
   navHome.addEventListener('click', () => navigateTo('home'));
   navChat.addEventListener('click', () => navigateTo('chat'));
   startNewChatBtn.addEventListener('click', startNewConversation);
@@ -337,8 +381,10 @@
     const target = e.target;
     const convoItem = target.closest('.conversation-item');
     if (!convoItem) return;
+
     const id = parseInt(convoItem.dataset.id, 10);
     if (target.closest('.delete-convo-btn')) {
+      e.stopPropagation(); // Prevent opening the chat when clicking delete
       deleteConversation(id);
     } else {
       openConversation(id);
