@@ -313,13 +313,11 @@
     }
   };
   
-  // ======= API Function (HISTORY FORMAT CORRECTED) =======
   const getEdenResponse = async (text) => {
     if (!projectUUID) {
       return new Promise(resolve => setTimeout(() => resolve("This is a test response. Please set `window.chatbotProject` to connect to a real Eden AI project."), 1000));
     }
     
-    // ** FIX: Create history in the format the API expects **
     const historyForAPI = [];
     const messages = conversations[activeConversationId].messages.slice(0, -1);
     
@@ -336,7 +334,7 @@
         query: text,
         llm_provider: provider,
         llm_model: model,
-        history: historyForAPI, // Use the correctly formatted history
+        history: historyForAPI,
         k,
         max_tokens,
         temperature
@@ -350,7 +348,6 @@
 
     if (!response.ok) {
         const errData = await response.json();
-        // Extract the most specific error message available from the API response
         const errMsg = errData.error?.message?.history?.[0] || errData.error?.message?.detail || errData.error?.message || `API Error: ${response.statusText}`;
         throw new Error(errMsg);
     }
@@ -359,21 +356,37 @@
     return data.result || "I'm sorry, I couldn't find an answer.";
   };
 
-  // ======= Event Listeners =======
-  toggleButton.addEventListener("click", () => toggleChatbot());
-  sendButton.addEventListener("click", sendMessage);
+  // ======= Event Listeners (WITH STOP PROPAGATION FIX) =======
+  toggleButton.addEventListener("click", (e) => {
+    e.stopPropagation(); // FIX: Prevent the click from bubbling up to the document.
+    toggleChatbot();
+  });
+  sendButton.addEventListener("click", (e) => {
+    e.stopPropagation(); // FIX: Prevent the click from bubbling up to the document.
+    sendMessage();
+  });
   userInput.addEventListener("keypress", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-  navHome.addEventListener('click', () => navigateTo('home'));
-  navChat.addEventListener('click', () => navigateTo('chat'));
-  startNewChatBtn.addEventListener('click', startNewConversation);
+  
+  navHome.addEventListener('click', (e) => {
+    e.stopPropagation(); // FIX: Prevent the click from bubbling up to the document.
+    navigateTo('home');
+  });
+  navChat.addEventListener('click', (e) => {
+    e.stopPropagation(); // FIX: Prevent the click from bubbling up to the document.
+    navigateTo('chat');
+  });
+  startNewChatBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // FIX: Prevent the click from bubbling up to the document.
+    startNewConversation();
+  });
   
   conversationList.addEventListener('click', (e) => {
+    e.stopPropagation(); // FIX: Prevent clicks inside this area from bubbling up to the document.
     const target = e.target;
     const convoItem = target.closest('.conversation-item');
     if (!convoItem) return;
     const id = parseInt(convoItem.dataset.id, 10);
     if (target.closest('.delete-convo-btn')) {
-      e.stopPropagation();
       deleteConversation(id);
     } else {
       openConversation(id);
